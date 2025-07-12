@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot with History</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>🤖 Chatbot</h2>
+        <div id="chatbox"></div>
+
+        <input type="text" id="userInput" placeholder="Type your message here...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="resetChat()">Reset</button>
+    </div>
+
+    <script>
+        function updateChat(history) {
+            const chatbox = document.getElementById("chatbox");
+            chatbox.innerHTML = '';
+            history.forEach(entry => {
+                const p = document.createElement("p");
+                p.innerHTML = `<strong>${entry[0]}:</strong> ${entry[1]}`;
+                chatbox.appendChild(p);
+            });
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById("userInput").value;
+            if (!userInput.trim()) return;
+
+            fetch("/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: `message=${userInput}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateChat(data.history);
+                document.getElementById("userInput").value = "";
+            });
+        }
+
+        function resetChat() {
+            fetch("/reset", {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => updateChat(data.history));
+        }
+
+        // Load initial history
+        fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: "message="
+        }).then(response => response.json())
+          .then(data => updateChat(data.history));
+    </script>
+</body>
+</html>
