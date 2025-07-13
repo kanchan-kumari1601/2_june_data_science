@@ -1,61 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Chatbot with History</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>🤖 Chatbot</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      background-color: white;
+      width: 400px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      color: #4A148C;
+      margin-bottom: 20px;
+    }
+
+    #chatbox {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      border-radius: 10px;
+      background: #f9f9f9;
+      font-size: 14px;
+    }
+
+    #chatbox p {
+      margin: 5px 0;
+    }
+
+    .user { color: #1E88E5; font-weight: bold; }
+    .bot { color: #43A047; font-weight: bold; }
+
+    .input-area {
+      display: flex;
+      margin-top: 15px;
+    }
+
+    #message {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-left: 10px;
+      background-color: #4A148C;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background-color: #6A1B9A;
+    }
+
+    .reset-btn {
+      margin-top: 10px;
+      width: 100%;
+      background-color: #B71C1C;
+    }
+
+    .reset-btn:hover {
+      background-color: #C62828;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>🤖 Chatbot</h2>
-        <div id="chatbox"></div>
-
-        <input type="text" id="userInput" placeholder="Type your message here...">
-        <button onclick="sendMessage()">Send</button>
-        <button onclick="resetChat()">Reset</button>
+  <div class="chat-container">
+    <h2>🤖 Chatbot</h2>
+    <div id="chatbox"></div>
+    <div class="input-area">
+      <input type="text" id="message" placeholder="Type your message here..." />
+      <button onclick="sendMessage()">Send</button>
     </div>
+    <button class="reset-btn" onclick="resetChat()">Reset</button>
+  </div>
 
-    <script>
-        function updateChat(history) {
-            const chatbox = document.getElementById("chatbox");
-            chatbox.innerHTML = '';
-            history.forEach(entry => {
-                const p = document.createElement("p");
-                p.innerHTML = `<strong>${entry[0]}:</strong> ${entry[1]}`;
-                chatbox.appendChild(p);
-            });
-        }
+  <script>
+    function sendMessage() {
+      const msg = document.getElementById("message").value;
+      if (!msg.trim()) return;
 
-        function sendMessage() {
-            const userInput = document.getElementById("userInput").value;
-            if (!userInput.trim()) return;
+      fetch("/chat", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: "message=" + encodeURIComponent(msg)
+      })
+      .then(res => res.json())
+      .then(data => {
+        const chatbox = document.getElementById("chatbox");
+        chatbox.innerHTML = "";
+        data.history.forEach(([sender, text]) => {
+          const className = sender === "You" ? "user" : "bot";
+          chatbox.innerHTML += `<p><span class="${className}">${sender}:</span> ${text}</p>`;
+        });
+        document.getElementById("message").value = "";
+        chatbox.scrollTop = chatbox.scrollHeight;
+      });
+    }
 
-            fetch("/chat", {
-                method: "POST",
-                headers: {"Content-Type": "application/x-www-form-urlencoded"},
-                body: `message=${userInput}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                updateChat(data.history);
-                document.getElementById("userInput").value = "";
-            });
-        }
-
-        function resetChat() {
-            fetch("/reset", {
-                method: "POST"
-            })
-            .then(response => response.json())
-            .then(data => updateChat(data.history));
-        }
-
-        // Load initial history
-        fetch("/chat", {
-            method: "POST",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: "message="
-        }).then(response => response.json())
-          .then(data => updateChat(data.history));
-    </script>
+    function resetChat() {
+      fetch("/reset", { method: "POST" })
+      .then(res => res.json())
+      .then(() => {
+        document.getElementById("chatbox").innerHTML = "";
+      });
+    }
+  </script>
 </body>
 </html>

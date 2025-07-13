@@ -13,6 +13,9 @@ def get_bot_response(user_input):
         return "Hi there!"
     elif "how are you" in user_input:
         return "I'm a bot, but I'm doing great!"
+    elif "whatsup" in user_input or "what's up" in user_input:
+        return "Not much! Just chatting with you 😊"
+
     elif "bye" in user_input:
         return "Goodbye! Talk to you later."
     else:
